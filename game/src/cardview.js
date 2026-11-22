@@ -80,6 +80,49 @@ export function drawCardBack(ctx, x, y, w, h) {
   ctx.restore();
 }
 
+// Each card's art gets a backdrop that says what it does: a shield for Guard, speed lines for Swift, rays for spells.
+function drawAccent(ctx, card, ax, ay, aw, ah, el) {
+  const cx = ax + aw / 2;
+  const cy = ay + ah / 2;
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = el.glyph;
+  ctx.strokeStyle = el.glyph;
+  if (card.keywords.includes('guard')) {
+    const s = ah * 0.46;
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.8, cy - s * 0.85);
+    ctx.lineTo(cx + s * 0.8, cy - s * 0.85);
+    ctx.lineTo(cx + s * 0.8, cy + s * 0.1);
+    ctx.quadraticCurveTo(cx + s * 0.8, cy + s * 0.75, cx, cy + s);
+    ctx.quadraticCurveTo(cx - s * 0.8, cy + s * 0.75, cx - s * 0.8, cy + s * 0.1);
+    ctx.closePath();
+    ctx.fill();
+  } else if (card.keywords.includes('swift')) {
+    ctx.lineWidth = Math.max(1.5, aw * 0.02);
+    for (let i = -3; i <= 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(ax + aw * 0.05, cy + i * ah * 0.12);
+      ctx.lineTo(ax + aw * (0.3 + 0.07 * (3 - Math.abs(i))), cy + i * ah * 0.12);
+      ctx.stroke();
+    }
+  } else if (card.type === 'spell') {
+    ctx.lineWidth = Math.max(1.5, aw * 0.025);
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * ah * 0.3, cy + Math.sin(a) * ah * 0.3);
+      ctx.lineTo(cx + Math.cos(a) * ah * 0.62, cy + Math.sin(a) * ah * 0.62);
+      ctx.stroke();
+    }
+  } else {
+    ctx.beginPath();
+    ctx.arc(cx, cy, ah * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 const GLOW = { gold: '#ffd85e', cyan: '#62e6ff', red: '#ff5a5a', green: '#7dff8a' };
 
 // o: { card, x, y, w, h, style: 'full' | 'mini', atk, hp, maxhp, glow, dim, sleepy, costBad }
@@ -144,8 +187,10 @@ export function drawCard(ctx, o) {
     ctx.arc(sx, sy, Math.max(1, w * (0.008 + (i % 3) * 0.006)), 0, Math.PI * 2);
     ctx.fill();
   }
+  drawAccent(ctx, card, ax, ay, aw, ah, el);
   ctx.globalAlpha = 0.95;
-  drawGlyph(ctx, card.element, ax + aw / 2, ay + ah / 2, Math.min(ah * 0.36, aw * 0.3), el.glyph);
+  const scale = card.type === 'spell' ? 0.34 : 0.26 + card.cost * 0.014;
+  drawGlyph(ctx, card.element, ax + aw / 2, ay + ah / 2, Math.min(ah * scale, aw * 0.3), el.glyph);
   ctx.restore();
   ctx.lineWidth = Math.max(1, w * 0.014);
   ctx.strokeStyle = 'rgba(255,240,200,.55)';

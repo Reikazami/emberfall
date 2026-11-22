@@ -149,8 +149,18 @@ function boardCard(ctx, ui, side, idx, rect) {
   else if (selected) glow = 'cyan';
   else if (ready) glow = 'green';
   const lift = hovered && !isTarget ? -6 : 0;
+  const lunge = ui.lunges.get(m.uid);
+  let ox = 0;
+  let oy = 0;
+  if (lunge) {
+    const k = (ui.time - lunge.t0) / 0.4;
+    if (k >= 0 && k <= 1) {
+      ox = lunge.dx * Math.sin(k * Math.PI);
+      oy = lunge.dy * Math.sin(k * Math.PI);
+    }
+  }
   drawCard(ctx, {
-    card: m.card, x: rect.x, y: rect.y + lift, w: rect.w, h: rect.h, style: 'mini',
+    card: m.card, x: rect.x + ox, y: rect.y + lift + oy, w: rect.w, h: rect.h, style: 'mini',
     atk: m.atk, hp: m.hp, maxhp: m.maxhp, glow, sleepy: m.sick && g.turn === side,
   });
 }

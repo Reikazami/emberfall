@@ -206,7 +206,7 @@ export function attack(g, sideIdx, idx, target) {
   const me = g.sides[sideIdx];
   const mine = me.board[idx];
   mine.attacked = true;
-  emit(g, { type: 'attack', side: sideIdx, idx, target });
+  emit(g, { type: 'attack', side: sideIdx, idx, uid: mine.uid, target });
   if (target.kind === 'face') {
     note(g, `${mine.card.name} strikes ${sideName(target.side)} for ${mine.atk}.`);
     hurtFace(g, target.side, mine.atk);

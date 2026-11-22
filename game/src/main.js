@@ -43,6 +43,11 @@ function processEvents() {
       const spot = eventSpot(event);
       ui.floaters.push({ ...spot, text: `+${event.amount}`, color: '#7dff9a', t0: ui.time });
       sound('heal');
+    } else if (event.type === 'attack') {
+      const from = boardRects(event.side, ui.g.sides[event.side].board.length + 1)[event.idx];
+      const to = event.target.kind === 'face' ? heroCircle(event.target.side) : eventSpot({ ...event.target, type: 'damage' });
+      if (from) ui.lunges.set(event.uid, { t0: ui.time, dx: (to.x - (from.x + from.w / 2)) * 0.45, dy: (to.y - (from.y + from.h / 2)) * 0.45 });
+      sound('hit');
     } else if (event.type === 'play') sound('play');
     else if (event.type === 'draw') sound('draw');
     else if (event.type === 'death') sound('death');

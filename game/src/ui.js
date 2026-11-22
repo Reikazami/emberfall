@@ -11,7 +11,7 @@ import {
 export function newUi() {
   return {
     phase: 'title', g: null, sel: null, hover: null, mouse: { x: 640, y: 360 }, floaters: [],
-    msg: '', banner: null, time: 0, aiBusy: false, aiAt: 0, endAt: 0,
+    msg: '', banner: null, lunges: new Map(), time: 0, aiBusy: false, aiAt: 0, endAt: 0,
   };
 }
 
