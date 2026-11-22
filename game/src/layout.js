@@ -2,7 +2,7 @@
 
 export const W = 1280;
 export const H = 720;
-export const CARD_SIZE = { hand: { w: 120, h: 170 }, board: { w: 104, h: 134 } };
+export const CARD_SIZE = { hand: { w: 130, h: 184 }, board: { w: 104, h: 134 } };
 export const HAND_LIFT = 28;
 export const END_BUTTON = { x: 1090, y: 318, w: 170, h: 64 };
 export const PREVIEW = { x: 1040, y: 14, w: 210, h: 298 };
@@ -12,7 +12,7 @@ export const START_BUTTON = { x: 520, y: 596, w: 240, h: 62 };
 
 export function handRects(count) {
   const { w, h } = CARD_SIZE.hand;
-  const spacing = Math.min(132, 900 / Math.max(count, 1));
+  const spacing = Math.min(140, 960 / Math.max(count, 1));
   const total = (count - 1) * spacing + w;
   const startX = 640 - total / 2 + 30;
   const rects = [];

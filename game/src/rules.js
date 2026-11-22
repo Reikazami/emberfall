@@ -119,6 +119,14 @@ function makeMinion(g, card) {
   };
 }
 
+// Puts a minion straight onto a side's board (used to stage showcase positions).
+export function summon(g, sideIdx, cardId, ready) {
+  const m = makeMinion(g, CARDS[cardId]);
+  m.sick = !ready;
+  g.sides[sideIdx].board.push(m);
+  return m;
+}
+
 export function guardIndexes(g, sideIdx) {
   const out = [];
   g.sides[sideIdx].board.forEach((m, i) => {
