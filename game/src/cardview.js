@@ -61,7 +61,7 @@ function badge(ctx, cx, cy, r, fill, rim, label, fontScale = 1.15) {
   ctx.restore();
 }
 
-export function drawCardBack(ctx, x, y, w, h) {
+function paintCardBack(ctx, x, y, w, h) {
   ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,.5)';
   ctx.shadowBlur = w * 0.1;
@@ -126,7 +126,7 @@ function drawAccent(ctx, card, ax, ay, aw, ah, el) {
 const GLOW = { gold: '#ffd85e', cyan: '#62e6ff', red: '#ff5a5a', green: '#7dff8a' };
 
 // o: { card, x, y, w, h, style: 'full' | 'mini', atk, hp, maxhp, glow, dim, sleepy, costBad }
-export function drawCard(ctx, o) {
+function paintCard(ctx, o) {
   const { card, x, y, w, h } = o;
   const el = ELEMENT[card.element];
   const mini = o.style === 'mini';
@@ -168,7 +168,7 @@ export function drawCard(ctx, o) {
   const ax = x + w * 0.08;
   const ay = y + (mini ? h * 0.22 : h * 0.2);
   const aw = w * 0.84;
-  const ah = h * (mini ? 0.42 : 0.37);
+  const ah = h * (mini ? 0.42 : 0.34);
   ctx.save();
   roundRect(ctx, ax, ay, aw, ah, w * 0.05);
   ctx.clip();
@@ -200,7 +200,7 @@ export function drawCard(ctx, o) {
   const tx = x + w * 0.08;
   const ty = ay + ah + h * 0.025;
   const tw = w * 0.84;
-  const th = mini ? h * 0.1 : h * 0.205;
+  const th = mini ? h * 0.1 : h * 0.235;
   ctx.fillStyle = 'rgba(14,9,22,.74)';
   roundRect(ctx, tx, ty, tw, th, w * 0.04);
   ctx.fill();
@@ -212,15 +212,15 @@ export function drawCard(ctx, o) {
     fitText(ctx, tags, tw * 0.95, w * 0.09);
     ctx.fillText(tags, tx + tw / 2, ty + th / 2 + 0.5);
   } else {
-    const kind = card.type === 'minion' ? ['Minion', ...card.keywords.map((k) => k[0].toUpperCase() + k.slice(1))].join(' · ') : 'Spell';
+    const kind = card.type === 'minion' ? [el.label, 'Minion', ...card.keywords.map((k) => k[0].toUpperCase() + k.slice(1))].join(' · ') : el.label + ' · Spell';
     ctx.fillStyle = '#ffd98a';
-    ctx.font = `bold ${Math.round(w * 0.078)}px "Trebuchet MS", Verdana, sans-serif`;
-    ctx.fillText(kind, tx + tw / 2, ty + th * 0.18);
+    fitText(ctx, kind, tw * 0.96, w * 0.078);
+    ctx.fillText(kind, tx + tw / 2, ty + th * 0.15);
     ctx.fillStyle = '#f6efe0';
     ctx.font = `${Math.round(w * 0.078)}px "Trebuchet MS", Verdana, sans-serif`;
     const body = card.type === 'spell' ? card.text : card.keywords.length ? KEYWORD_TEXT[card.keywords[0]] : card.text;
     const lines = wrapLines(ctx, body, tw * 0.92).slice(0, 3);
-    lines.forEach((line, i) => ctx.fillText(line, tx + tw / 2, ty + th * (0.4 + i * 0.22)));
+    lines.forEach((line, i) => ctx.fillText(line, tx + tw / 2, ty + th * (0.38 + i * 0.22)));
   }
 
   if (card.type === 'minion') {
@@ -251,4 +251,48 @@ export function drawCard(ctx, o) {
     ctx.fillText('zZ', x + w * 0.78, y + h * 0.3);
   }
   ctx.restore();
+}
+
+// Painting a card costs dozens of gradient, shadow and text calls, so each distinct look is painted
+// once into a small offscreen sprite and every later frame is a single drawImage.
+const sprites = new Map();
+const MAX_SPRITES = 300;
+
+function spriteFor(o) {
+  const w = Math.round(o.w);
+  const h = Math.round(o.h);
+  const key = [o.card.id, o.style, w, h, o.atk, o.hp, o.maxhp, o.glow, o.dim ? 1 : 0, o.sleepy ? 1 : 0, o.costBad ? 1 : 0].join('|');
+  let sprite = sprites.get(key);
+  if (sprite) return sprite;
+  const pad = Math.ceil(w * 0.3);
+  const canvas = document.createElement('canvas');
+  canvas.width = w + pad * 2;
+  canvas.height = h + pad * 2;
+  paintCard(canvas.getContext('2d'), { ...o, x: pad, y: pad, w, h });
+  sprite = { canvas, pad, w, h };
+  if (sprites.size >= MAX_SPRITES) sprites.clear();
+  sprites.set(key, sprite);
+  return sprite;
+}
+
+export function drawCard(ctx, o) {
+  const s = spriteFor(o);
+  ctx.drawImage(s.canvas, o.x - s.pad, o.y - s.pad);
+}
+
+const backs = new Map();
+
+export function drawCardBack(ctx, x, y, w, h) {
+  const key = w + 'x' + h;
+  let sprite = backs.get(key);
+  if (!sprite) {
+    const pad = Math.ceil(w * 0.3);
+    const canvas = document.createElement('canvas');
+    canvas.width = w + pad * 2;
+    canvas.height = h + pad * 2;
+    paintCardBack(canvas.getContext('2d'), pad, pad, w, h);
+    sprite = { canvas, pad };
+    backs.set(key, sprite);
+  }
+  ctx.drawImage(sprite.canvas, x - sprite.pad, y - sprite.pad);
 }

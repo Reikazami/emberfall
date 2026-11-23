@@ -6,7 +6,7 @@ import { sound, unlockAudio } from './audio.js';
 import { boardRects, H, heroCircle, W } from './layout.js';
 import { draw } from './render.js';
 import { buildShot } from './shots.js';
-import { chooseHand, finishTurn, handleClick, hitTest, newUi, playerCanAct, startDuel } from './ui.js';
+import { chooseHand, confirmTarget, cycleMinion, cycleTarget, finishTurn, handleClick, hitTest, newUi, playerCanAct, startDuel } from './ui.js';
 
 const canvas = document.getElementById('stage');
 const ctx = canvas.getContext('2d');
@@ -137,9 +137,21 @@ window.addEventListener('keydown', (event) => {
     else if (key === 't' || key === 'T') backToTitle();
     return;
   }
+  const picking = ui.sel && (ui.sel.kind === 'minion' || ui.sel.kind === 'hand');
   if (key === 'Escape') {
     ui.sel = null;
     ui.msg = '';
+  } else if (key === 'a' || key === 'A') {
+    cycleMinion(ui);
+  } else if (picking && (key === 'Tab' || key === 'ArrowRight' || key === 'ArrowDown')) {
+    event.preventDefault();
+    cycleTarget(ui, 1);
+  } else if (picking && (key === 'ArrowLeft' || key === 'ArrowUp')) {
+    event.preventDefault();
+    cycleTarget(ui, -1);
+  } else if (picking && (key === ' ' || key === 'Enter')) {
+    event.preventDefault();
+    confirmTarget(ui);
   } else if (key === ' ' || key === 'e' || key === 'E' || key === 'Enter') {
     event.preventDefault();
     finishTurn(ui);

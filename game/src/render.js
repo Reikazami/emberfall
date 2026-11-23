@@ -15,7 +15,7 @@ const FONT = '"Trebuchet MS", Verdana, sans-serif';
 const HERO_NAMES = ['Warden Vael', 'The Ashen Regent'];
 const HERO_ELEMENTS = ['tide', 'ember'];
 
-function drawTable(ctx, t) {
+function paintTable(ctx, t) {
   const sky = ctx.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, 760);
   sky.addColorStop(0, '#2a5a48');
   sky.addColorStop(0.55, '#173a30');
@@ -46,6 +46,18 @@ function drawTable(ctx, t) {
   ctx.lineTo(1045, 307);
   ctx.stroke();
   ctx.setLineDash([]);
+}
+
+// The table never changes, so it is painted once and copied each frame.
+let tableSprite = null;
+function drawTable(ctx) {
+  if (!tableSprite) {
+    tableSprite = document.createElement('canvas');
+    tableSprite.width = W;
+    tableSprite.height = H;
+    paintTable(tableSprite.getContext('2d'), 0);
+  }
+  ctx.drawImage(tableSprite, 0, 0);
 }
 
 function drawManaCrystals(ctx, x, y, mana, maxMana) {
@@ -372,7 +384,7 @@ function drawEndScreen(ctx, ui) {
 
 function drawTitle(ctx, ui) {
   const t = ui.time;
-  drawTable(ctx, t);
+  drawTable(ctx);
   ctx.save();
   const names = ['phoenix', 'wave', 'titan', 'drake', 'fireball'];
   names.forEach((id, i) => {
@@ -408,7 +420,7 @@ function drawTitle(ctx, ui) {
   ctx.fillText('Click a card to play it  ·  Click a ready minion, then a foe to attack  ·  Guard minions must fall first', 640, 235);
   ctx.fillStyle = '#c9dccd';
   ctx.font = `15px ${FONT}`;
-  ctx.fillText('Keys 1-7 play cards  ·  Space ends your turn  ·  Esc cancels  ·  Reduce the Regent from 20 life to 0', 640, 256);
+  ctx.fillText('Keys 1-7 play cards  ·  A picks a minion, Tab picks a target, Enter strikes  ·  Space ends turn  ·  Esc cancels', 640, 256);
   ctx.restore();
   drawButton(ctx, START_BUTTON, 'Begin duel (Enter)', ui.hover && ui.hover.kind === 'start', true);
 }
@@ -418,7 +430,7 @@ export function draw(ctx, ui) {
     drawTitle(ctx, ui);
     return;
   }
-  drawTable(ctx, ui.time);
+  drawTable(ctx);
   drawOpponentHand(ctx, ui.g);
   drawHero(ctx, ui, 1);
   drawHero(ctx, ui, 0);

@@ -88,6 +88,7 @@ export function chooseHand(ui, idx) {
   const card = CARDS[ui.g.sides[0].hand[idx]];
   if (isTargetedSpell(card)) {
     ui.sel = { kind: 'hand', idx };
+    ui.kbTarget = -1;
     ui.msg = `Choose a target for ${card.name}.`;
     return;
   }
@@ -141,4 +142,42 @@ export function handleClick(ui, hit) {
   if (hit.kind === 'hand') chooseHand(ui, hit.idx);
   else if (hit.kind === 'board' && hit.side === 0) chooseMinion(ui, hit.idx);
   else ui.sel = null;
+}
+
+// Keyboard play: A picks the next ready minion, Tab / arrows walk the legal targets (shown with
+// the same highlight as the mouse hover), Enter or Space strikes. Escape backs out.
+export function cycleMinion(ui) {
+  if (!playerCanAct(ui)) return;
+  const board = ui.g.sides[0].board;
+  const ready = board.map((_, i) => i).filter((i) => canAttack(ui.g, 0, i));
+  if (ready.length === 0) {
+    ui.msg = 'No minion is ready to attack.';
+    return;
+  }
+  const cur = ui.sel && ui.sel.kind === 'minion' ? ready.indexOf(ui.sel.idx) : -1;
+  ui.sel = { kind: 'minion', idx: ready[(cur + 1) % ready.length] };
+  ui.kbTarget = -1;
+  ui.msg = 'Tab picks a target, Enter strikes.';
+  cycleTarget(ui, 1);
+}
+
+function targetHover(t) {
+  return t.kind === 'face' ? { kind: 'hero', side: t.side } : { kind: 'board', side: t.side, idx: t.idx };
+}
+
+export function cycleTarget(ui, dir) {
+  const targets = validTargets(ui);
+  if (!playerCanAct(ui) || targets.length === 0) return false;
+  ui.kbTarget = ((ui.kbTarget ?? -1) + dir + targets.length) % targets.length;
+  ui.hover = targetHover(targets[ui.kbTarget]);
+  return true;
+}
+
+export function confirmTarget(ui) {
+  const targets = validTargets(ui);
+  if (!playerCanAct(ui) || targets.length === 0) return false;
+  const t = targets[Math.max(0, ui.kbTarget ?? 0) % targets.length];
+  chooseTarget(ui, t);
+  ui.kbTarget = -1;
+  return true;
 }

@@ -44,7 +44,7 @@ export function beginTurn(g) {
     m.sick = false;
     m.attacked = false;
   }
-  drawCards(g, g.turn, 1);
+  if (g.turnNum > 1) drawCards(g, g.turn, 1); // the opener skips their first draw
   emit(g, { type: 'turn', side: g.turn });
 }
 
@@ -192,6 +192,7 @@ export function playCard(g, sideIdx, handIdx, target) {
   } else if (fx.kind === 'heal') {
     side.life = Math.min(START_LIFE, side.life + fx.amount);
     emit(g, { type: 'heal', side: sideIdx, amount: fx.amount });
+    if (fx.draw) drawCards(g, sideIdx, fx.draw);
   } else if (fx.kind === 'draw') {
     drawCards(g, sideIdx, fx.amount);
   } else if (fx.kind === 'sweep') {
